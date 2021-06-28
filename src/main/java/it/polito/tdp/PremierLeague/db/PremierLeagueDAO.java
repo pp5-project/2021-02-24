@@ -7,34 +7,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import it.polito.tdp.PremierLeague.model.Action;
+import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
 import it.polito.tdp.PremierLeague.model.Team;
 
 public class PremierLeagueDAO {
 	
-	public List<Player> listAllPlayers(){
-		String sql = "SELECT * FROM Players";
-		List<Player> result = new ArrayList<Player>();
-		Connection conn = DBConnect.getConnection();
-
-		try {
-			PreparedStatement st = conn.prepareStatement(sql);
-			ResultSet res = st.executeQuery();
-			while (res.next()) {
-
-				Player player = new Player(res.getInt("PlayerID"), res.getString("Name"));
-				result.add(player);
-			}
-			conn.close();
-			return result;
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
+		
 	public List<Team> listAllTeams(){
 		String sql = "SELECT * FROM Teams";
 		List<Team> result = new ArrayList<Team>();
@@ -100,6 +80,34 @@ public class PremierLeagueDAO {
 				
 				
 				result.add(match);
+
+			}
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	public List<Player> getPlayers(int idMatch){
+		String sql = "SELECT p.PlayerID, p.name, (a.TotalSuccessfulPassesAll+a.Assists)/ a.TimePlayed as peso, a.TeamID "
+				+ "FROM Actions a, players p "
+				+ "WHERE a.PlayerID=p.PlayerID AND matchID=? ";
+		List<Player> result = new ArrayList<Player>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, idMatch);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+				Player p=new Player(res.getInt("p.PlayerID"), res.getString("p.name"));
+				p.setEfficiency(res.getDouble("peso"));
+				p.setTeam(res.getInt("a.TeamID"));
+				result.add(p);
 
 			}
 			conn.close();
